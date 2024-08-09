@@ -6,7 +6,7 @@ import { useFormState } from "react-dom";
 import { createAccount } from "./actions";
 
 export default function CreateAccount() {
-  const [staet, action] = useFormState(createAccount, null);
+  const [state, action] = useFormState(createAccount, null);
 
   return (
     <div className="flex flex-col gap-10 py-8 px-6">
@@ -20,19 +20,28 @@ export default function CreateAccount() {
           type="text"
           placeholder="Username"
           required
+          errors={state?.fieldErrors.username}
         />
-        <FormInput name="email" type="email" placeholder="Email" required />
+        <FormInput
+          name="email"
+          type="email"
+          placeholder="Email"
+          required
+          errors={state?.fieldErrors.email}
+        />
         <FormInput
           name="password"
           type="password"
           placeholder="Password"
           required
+          errors={state?.fieldErrors.password}
         />
         <FormInput
           name="confirmPassword"
           type="password"
           placeholder="Confirm Password"
           required
+          errors={state?.fieldErrors.confirmPassword}
         />
         <FormButton text="Create account" />
       </form>
