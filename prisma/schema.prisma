@@ -19,7 +19,7 @@ model User{
   username String @unique
   email String? @unique
   password String? 
-  phone String @unique
+  phone String? @unique
   github_id String? @unique
   avatar String?
   create_at DateTime @default(now())
