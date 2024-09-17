@@ -4,6 +4,7 @@ import {
   PASSWORD_REGEX,
   PASSWORD_REGEX_ERROR,
 } from "@/lib/constants";
+import db from "@/lib/db";
 import { z } from "zod";
 
 const checkUsername = (username: string) => !username.includes("potato");
@@ -14,6 +15,28 @@ const checkPassword = ({
   password: string;
   confirmPassword: string;
 }) => password === confirmPassword;
+const checkUniqueUsername = async (username: string) => {
+  const user = await db.user.findUnique({
+    where: {
+      username,
+    },
+    select: {
+      id: true,
+    },
+  });
+  return !Boolean(user);
+};
+const checkUniqueEmail = async (email: string) => {
+  const user = await db.user.findUnique({
+    where: {
+      email,
+    },
+    select: {
+      id: true,
+    },
+  });
+  return !Boolean(user);
+};
 
 const formSchema = z
   .object({
@@ -26,13 +49,19 @@ const formSchema = z
       .max(10, "That is too loooong!")
       .toLowerCase()
       .trim()
-      .transform((username) => `🔥 ${username} 🔥`)
-      .refine(checkUsername, "No potatoes allowed!"),
-    email: z.string().email().toLowerCase(),
-    password: z
+      // .transform((username) => `🔥 ${username} 🔥`)
+      .refine(checkUsername, "No potatoes allowed!")
+      .refine(checkUniqueUsername, "This username is alraedy taken"),
+    email: z
       .string()
-      .min(PASSWORD_MIN_LENGTH)
-      .regex(PASSWORD_REGEX, PASSWORD_REGEX_ERROR),
+      .email()
+      .toLowerCase()
+      .refine(
+        checkUniqueEmail,
+        "There is an account already registered with that email."
+      ),
+    password: z.string().min(PASSWORD_MIN_LENGTH),
+    // .regex(PASSWORD_REGEX, PASSWORD_REGEX_ERROR),
     confirmPassword: z.string().min(PASSWORD_MIN_LENGTH),
   })
   .refine(checkPassword, {
@@ -40,7 +69,7 @@ const formSchema = z
     path: ["confirmPassword"],
   });
 
-export async function createAccount(formData: FormData) {
+export async function createAccount(prev: any, formData: FormData) {
   const data = {
     username: formData.get("username"),
     email: formData.get("email"),
@@ -48,11 +77,14 @@ export async function createAccount(formData: FormData) {
     confirmPassword: formData.get("confirmPassword"),
   };
 
-  const result = formSchema.safeParse(data);
+  const result = await formSchema.safeParseAsync(data);
   if (!result.success) {
     console.log(result.error.flatten());
     return result.error.flatten();
   } else {
-    console.log(result.data);
+    // TODO: ahsh password
+    // TODO: save the user to db
+    // TODO: log the user in
+    // TODO: redirect "/home"
   }
 }
