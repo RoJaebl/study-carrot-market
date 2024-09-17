@@ -21,7 +21,6 @@ async function test() {
       user: true,
     },
   });
-  console.log(token);
 }
 
 test();
