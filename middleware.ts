@@ -1,17 +1,8 @@
-import { MiddlewareConfig, NextRequest, NextResponse } from "next/server";
-import getSession from "./lib/session";
+import { MiddlewareConfig, NextRequest } from "next/server";
+import db from "./lib/db";
 
 export async function middleware(request: NextRequest) {
-  console.log("hello");
-  // const pathname = request.nextUrl.pathname;
-  // if (pathname === "/") {
-  //   const response = NextResponse.next();
-  //   response.cookies.set("middleware-cookie", "hello!");
-  //   return response;
-  // }
-  // if (request.nextUrl.pathname === "/profile") {
-  //   return Response.redirect(new URL("/", request.url));
-  // }
+  await db.user.findMany();
 }
 
 export const config: MiddlewareConfig = {
