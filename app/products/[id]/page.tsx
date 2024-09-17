@@ -4,7 +4,7 @@ import { formatToWon } from "@/lib/utils";
 import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 async function getIsOwner(userId: number) {
   return (await getSession()).id === userId;
@@ -36,6 +36,15 @@ export default async function ProductDetail({
   const product = await getProduct(id);
   if (!product) notFound();
   const isOwner = await getIsOwner(product.userId);
+  const onDelete = async () => {
+    "use server";
+    await db.product.delete({
+      where: {
+        id,
+      },
+    });
+    redirect("/products");
+  };
   return (
     <div>
       <div className="relative aspect-square">
@@ -67,9 +76,11 @@ export default async function ProductDetail({
           {formatToWon(product.price)}
         </span>
         {isOwner ? (
-          <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
-            Delete product
-          </button>
+          <form action={onDelete}>
+            <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
+              Delete product
+            </button>
+          </form>
         ) : null}
         <Link
           className="rounded-md bg-orange-500 px-5 py-2.5 font-semibold text-white"
