@@ -13,6 +13,8 @@ export default function AddProduct() {
       target: { files },
     } = event;
     if (!files) return;
+    if (!RegExp(/^image\/(jpe?g|png)$/).test(files[0].type)) return;
+    if (2_000_000 < files[0].size) return;
     const file = files[0];
     const url = URL.createObjectURL(file);
     setPreview(url);
