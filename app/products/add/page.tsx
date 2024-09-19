@@ -5,31 +5,24 @@ import Input from "@/components/input";
 import { PhotoIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { getUploadUrl, uploadProduct } from "./actions";
-import { useFormState } from "react-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { productSchema, ProductType } from "./schema";
 
 export default function AddProduct() {
   const [preview, setPreview] = useState("");
   const [uploadUrl, setUploadUrl] = useState("");
-  const [photoId, setImageId] = useState("");
-  const interceptAction = async (_: any, formData: FormData) => {
-    const file = formData.get("photo");
-    if (!file) return;
-    const cloudflareForm = new FormData();
-    cloudflareForm.append("file", file);
-    const response = await fetch(uploadUrl, {
-      method: "POST",
-      body: cloudflareForm,
-    });
-    if (response.status !== 200) {
-      return;
-    }
-    const photoUrl =
-      `https://imagedelivery.net/1IWmytYXYQGAWu907ilrGg/${photoId}
-    `.trim();
-    formData.set("photo", photoUrl);
-    return uploadProduct(_, formData);
-  };
-  const [state, action] = useFormState(interceptAction, null);
+  const [file, setFile] = useState<File | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    setError,
+    formState: { errors },
+  } = useForm<ProductType>({
+    resolver: zodResolver(productSchema),
+  });
+
   const onImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const {
       target: { files },
@@ -40,16 +33,44 @@ export default function AddProduct() {
     const file = files[0];
     const url = URL.createObjectURL(file);
     setPreview(url);
+    setFile(file);
     const { success, result } = await getUploadUrl();
     if (success) {
       const { id, uploadURL } = result;
       setUploadUrl(uploadURL);
-      setImageId(id);
+      setValue(
+        "photo",
+        `https://imagedelivery.net/1IWmytYXYQGAWu907ilrGg/${id}
+    `.trim(),
+      );
     }
   };
+  const onValid = async () =>
+    await handleSubmit(async (data: ProductType) => {
+      if (!file) return;
+      const cloudflareForm = new FormData();
+      cloudflareForm.append("file", file);
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: cloudflareForm,
+      });
+      if (response.status !== 200) {
+        return;
+      }
+      const formData = new FormData();
+      formData.append("title", data.title);
+      formData.append("price", data.price + "");
+      formData.append("description", data.description);
+      formData.append("photo", data.photo);
+      const errors = await uploadProduct(formData);
+      if (errors) {
+        /* setError("")*/
+      }
+    })();
+
   return (
     <div>
-      <form action={action} className="flex flex-col gap-5 p-5">
+      <form action={onValid} className="flex flex-col gap-5 p-5">
         <label
           htmlFor="photo"
           className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-neutral-300 bg-cover text-neutral-300"
@@ -62,7 +83,7 @@ export default function AddProduct() {
               <PhotoIcon className="w-20" />
               <div className="text-sm text-neutral-400">
                 사진을 추가해주세요.
-                {state?.fieldErrors.photo}
+                {errors.photo?.message}
               </div>
             </>
           ) : null}
@@ -76,25 +97,25 @@ export default function AddProduct() {
           className="hidden"
         />
         <Input
-          name="title"
           required
           placeholder="제목"
           type="text"
-          errors={state?.fieldErrors.title}
+          {...register("title")}
+          errors={[errors.title?.message ?? ""]}
         />
         <Input
-          name="price"
           type="number"
           required
           placeholder="가격"
-          errors={state?.fieldErrors.price}
+          {...register("price")}
+          errors={[errors.price?.message ?? ""]}
         />
         <Input
-          name="description"
           type="text"
           required
           placeholder="자세한 설명"
-          errors={state?.fieldErrors.description}
+          {...register("description")}
+          errors={[errors.description?.message ?? ""]}
         />
         <Button text="작성 완료" />
       </form>
