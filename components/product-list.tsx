@@ -30,7 +30,7 @@ export default function ProductList({ initialProducts }: ProductListProps) {
           setIsLoading(false);
         }
       },
-      { threshold: 1.0, rootMargin: "0px 0px -100px 0px" },
+      { threshold: 1.0 },
     );
     if (trigger.current) {
       observer.observe(trigger.current);
@@ -46,8 +46,7 @@ export default function ProductList({ initialProducts }: ProductListProps) {
       {!isLastPage ? (
         <span
           ref={trigger}
-          style={{ marginTop: `${page * 900}vh` }}
-          className="mx-auto mb-96 w-fit rounded-md bg-orange-500 px-3 py-2 text-sm font-semibold duration-300 hover:opacity-90 active:scale-90"
+          className="mx-auto w-fit rounded-md bg-orange-500 px-3 py-2 text-sm font-semibold duration-300 hover:opacity-90 active:scale-90"
         >
           {isLoading ? "로딩 중" : "Load more"}
         </span>
