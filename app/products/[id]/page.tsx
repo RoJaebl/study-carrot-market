@@ -5,6 +5,7 @@ import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { number } from "zod";
 
 async function getIsOwner(userId: number) {
   return (await getSession()).id === userId;
@@ -12,20 +13,19 @@ async function getIsOwner(userId: number) {
 
 async function getProduct(id: number) {
   const product = await db.product.findUnique({
-    where: {
-      id,
-    },
-    include: {
-      user: {
-        select: {
-          username: true,
-          avatar: true,
-        },
-      },
-    },
+    where: { id },
+    include: { user: { select: { username: true, avatar: true } } },
   });
   return product;
 }
+
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const products = await getProduct(Number(params.id));
+  return {
+    title: products?.title,
+  };
+}
+
 export default async function ProductDetail({
   params,
 }: {
