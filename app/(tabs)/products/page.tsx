@@ -2,24 +2,25 @@ import ProductList from "@/components/product-list";
 import db from "@/lib/db";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Prisma } from "@prisma/client";
+import { unstable_cache as nextCache } from "next/cache";
 import Link from "next/link";
 
-async function getInitialProducts() {
-  const products = await db.product.findMany({
-    select: {
-      title: true,
-      price: true,
-      create_at: true,
-      photo: true,
-      id: true,
-    },
-    // take: 1,
-    orderBy: {
-      create_at: "desc",
-    },
-  });
-  return products;
-}
+const getInitialProducts = nextCache(
+  async () =>
+    await db.product.findMany({
+      select: {
+        title: true,
+        price: true,
+        create_at: true,
+        photo: true,
+        id: true,
+      },
+      // take: 1,
+      orderBy: { create_at: "desc" },
+    }),
+  ["products"],
+);
+
 export type InitialProducts = Prisma.PromiseReturnType<
   typeof getInitialProducts
 >;
