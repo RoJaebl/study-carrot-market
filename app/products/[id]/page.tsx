@@ -5,13 +5,23 @@ import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { number } from "zod";
+import { unstable_cache as nextCache, revalidateTag } from "next/cache";
 
 async function getIsOwner(userId: number) {
   return (await getSession()).id === userId;
 }
 
+async function getProductTitle(id: number) {
+  console.log("title");
+  const product = await db.product.findUnique({
+    where: { id },
+    select: { title: true },
+  });
+  return product;
+}
+
 async function getProduct(id: number) {
+  console.log("product");
   const product = await db.product.findUnique({
     where: { id },
     include: { user: { select: { username: true, avatar: true } } },
@@ -19,8 +29,16 @@ async function getProduct(id: number) {
   return product;
 }
 
+const getCachedProduct = nextCache(getProduct, ["product-detail"], {
+  tags: ["product-detail"],
+});
+
+const getCachedProductTitle = nextCache(getProductTitle, ["product-title"], {
+  tags: ["product-title"],
+});
+
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const products = await getProduct(Number(params.id));
+  const products = await getCachedProductTitle(Number(params.id));
   return {
     title: products?.title,
   };
@@ -33,13 +51,17 @@ export default async function ProductDetail({
 }) {
   const id = Number(params.id);
   isNaN(id) && notFound();
-  const product = await getProduct(id);
+  const product = await getCachedProduct(id);
   if (!product) notFound();
   const isOwner = await getIsOwner(product.userId);
   const onDelete = async () => {
     "use server";
     await db.product.delete({ where: { id } });
     redirect("/products");
+  };
+  const revalidate = async () => {
+    "use server";
+    revalidateTag("product-title");
   };
   return (
     <div>
@@ -77,12 +99,17 @@ export default async function ProductDetail({
           {formatToWon(product.price)}
         </span>
         {isOwner ? (
-          <form action={onDelete}>
+          <form action={revalidate}>
             <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
-              Delete product
+              Revalidate title cache
             </button>
           </form>
-        ) : null}
+        ) : // <form action={onDelete}>
+        //   <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
+        //     Delete product
+        //   </button>
+        // </form>
+        null}
         <Link
           className="rounded-md bg-orange-500 px-5 py-2.5 font-semibold text-white"
           href={``}
