@@ -7,10 +7,12 @@ import { useState } from "react";
 import { getUploadUrl, uploadProduct } from "./actions";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productSchema, ProductType } from "./schema";
 import { revalidateTag } from "next/cache";
+import { productSchema, ProductType } from "../../add/schema";
 
-export default function AddProduct() {
+// TODO: id에서 url query로 받아와 데이터를 수정하고 revalidate
+// https://velog.io/@jma1020/Next-NextJS-%ED%8E%98%EC%9D%B4%EC%A7%80%EA%B0%84-query-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EC%9D%B4%EB%8F%99%EB%B0%A9%EB%B2%95-Link-nextrouter
+export default function EditProduct() {
   const [preview, setPreview] = useState("");
   const [uploadUrl, setUploadUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -125,3 +127,6 @@ export default function AddProduct() {
     </div>
   );
 }
+// 1. '/products' 페이지는 사용자 경험을 올리기 위해 상단을 스와이프 하면 재검증 및 새로 고침
+// 2. '1'의 동작으로 제품 추가('/products/add')는 'revalidateTag'만으로 '/products' 페이지 갱신
+// 3. 제품 삭제 및 수정은 제품 추가와 같이 소유자의 아이템을 수정하는 것이기에  'revalidateTag'로 '/products' 페이지 갱신

@@ -6,9 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { unstable_cache as nextCache, revalidateTag } from "next/cache";
+import React from "react";
 
 async function getIsOwner(userId: number) {
-  // return (await getSession()).id === userId;
+  return (await getSession()).id === userId;
 }
 
 async function getProductTitle(id: number) {
@@ -57,11 +58,12 @@ export default async function ProductDetail({
   const onDelete = async () => {
     "use server";
     await db.product.delete({ where: { id } });
+    revalidateTag("products");
     redirect("/products");
   };
-  const revalidate = async () => {
+  const onEdit = async () => {
     "use server";
-    revalidateTag("product-title");
+    redirect("/products/edit");
   };
   return (
     <div>
@@ -98,23 +100,20 @@ export default async function ProductDetail({
         <span className="text-lg font-semibold">
           {formatToWon(product.price)}
         </span>
-        <form action={revalidate}>
-          <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
-            Revalidate title cache
-          </button>
-        </form>
-        {/* {isOwner ? (
-          <form action={revalidate}>
-            <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
-              Revalidate title cache
-            </button>
-          </form>
-        ) : // <form action={onDelete}>
-        //   <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
-        //     Delete product
-        //   </button>
-        // </form>
-        null} */}
+        {isOwner ? (
+          <React.Fragment>
+            <form action={onDelete}>
+              <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
+                Delete product
+              </button>
+            </form>
+            <form action={onEdit}>
+              <button className="rounded-md bg-orange-500 px-5 py-2.5 font-semibold text-white">
+                Edit product
+              </button>
+            </form>
+          </React.Fragment>
+        ) : null}
         <Link
           className="rounded-md bg-orange-500 px-5 py-2.5 font-semibold text-white"
           href={``}
@@ -124,11 +123,4 @@ export default async function ProductDetail({
       </div>
     </div>
   );
-}
-
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
-  const products = await db.product.findMany({ select: { id: true } });
-  return products.map(({ id }) => ({ id: id + "" }));
 }
