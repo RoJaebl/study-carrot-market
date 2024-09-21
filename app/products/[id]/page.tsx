@@ -8,7 +8,7 @@ import { notFound, redirect } from "next/navigation";
 import { unstable_cache as nextCache, revalidateTag } from "next/cache";
 
 async function getIsOwner(userId: number) {
-  return (await getSession()).id === userId;
+  // return (await getSession()).id === userId;
 }
 
 async function getProductTitle(id: number) {
@@ -98,7 +98,12 @@ export default async function ProductDetail({
         <span className="text-lg font-semibold">
           {formatToWon(product.price)}
         </span>
-        {isOwner ? (
+        <form action={revalidate}>
+          <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
+            Revalidate title cache
+          </button>
+        </form>
+        {/* {isOwner ? (
           <form action={revalidate}>
             <button className="rounded-md bg-red-500 px-5 py-2.5 font-semibold text-white">
               Revalidate title cache
@@ -109,7 +114,7 @@ export default async function ProductDetail({
         //     Delete product
         //   </button>
         // </form>
-        null}
+        null} */}
         <Link
           className="rounded-md bg-orange-500 px-5 py-2.5 font-semibold text-white"
           href={``}
@@ -119,4 +124,9 @@ export default async function ProductDetail({
       </div>
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  const products = await db.product.findMany({ select: { id: true } });
+  return products.map(({ id }) => ({ id: id + "" }));
 }
