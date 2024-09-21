@@ -126,6 +126,8 @@ export default async function ProductDetail({
   );
 }
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const products = await db.product.findMany({ select: { id: true } });
   return products.map(({ id }) => ({ id: id + "" }));
